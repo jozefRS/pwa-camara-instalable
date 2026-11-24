@@ -1,39 +1,52 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
-<!-- iOS -->
-<link rel="apple-touch-icon" href="./icons/icon-180.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Visor">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visor de cámara</title>
+
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0f172a">
   <link rel="stylesheet" href="./styles.css">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <!-- iOS -->
+  <link rel="apple-touch-icon" href="./icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Visor">
 </head>
 <body>
-  <main>
-    <h1>Visor de cámara</h1>
+ <main>
+  <h1>Visor de cámara</h1>
 
-    <video id="visor-camara" autoplay playsinline muted></video>
+  <video id="visor-camara" autoplay playsinline muted></video>
 
-    <p id="mensaje-estado">Cámara apagada.</p>
+  <p id="mensaje-estado">Cámara apagada.</p>
 
-    <div class="controles">
-      <button id="btn-alternar-camara" type="button">Cambiar cámara</button>
-      <button id="btn-apagar-camara" type="button">Apagar cámara</button>
-    </div>
-    <section id="ayuda-ios" hidden>
-  <p>
-    Para instalar esta app en tu iPhone: toca el botón <strong>Compartir</strong>
-    (el cuadrado con la flecha hacia arriba) y elige
-    <strong>"Agregar a pantalla de inicio"</strong>.
-  </p>
-</section>
-  </main>
+  <section id="aviso-permiso" hidden>
+    <p>
+      Esta aplicación requiere acceso a tu cámara únicamente para mostrar una
+      vista previa local en pantalla. Ninguna imagen se envía a servidores externos.
+    </p>
+    <button id="btn-confirmar-permiso" type="button">Aceptar y encender cámara</button>
+  </section>
+
+  <div class="controles">
+    <button id="btn-preparar-camara" type="button">Solicitar acceso a cámara</button>
+    <button id="btn-alternar-camara" type="button">Cambiar cámara</button>
+    <button id="btn-apagar-camara" type="button">Apagar cámara</button>
+    <button id="btn-instalar" type="button" hidden>Instalar app</button>
+  </div>
+
+  <section id="ayuda-ios" hidden>
+    <p>
+      Para instalar esta app en tu iPhone: toca <strong>Compartir</strong>
+      (el cuadrado con la flecha hacia arriba) y elige
+      <strong>"Agregar a pantalla de inicio"</strong>.
+    </p>
+  </section>
+</main>
 
   <script src="./app.js"></script>
 </body>

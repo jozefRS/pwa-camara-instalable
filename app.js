@@ -1,12 +1,27 @@
+// ---------- Referencias al DOM (todas arriba, una sola vez) ----------
+const visorVideo    = document.getElementById('visor-camara');
+const mensajeEstado = document.getElementById('mensaje-estado');
+const avisoPermiso  = document.getElementById('aviso-permiso');
+const btnPreparar   = document.getElementById('btn-preparar-camara');
+const btnConfirmar  = document.getElementById('btn-confirmar-permiso');
+const btnAlternar   = document.getElementById('btn-alternar-camara');
+const btnApagar     = document.getElementById('btn-apagar-camara');
+const btnInstalar   = document.getElementById('btn-instalar');
+const ayudaIOS      = document.getElementById('ayuda-ios');
+
+// ---------- Estado ----------
 let eventoInstalacionDiferido = null;
+let streamActual = null;
+let modoCamaraActual = 'environment'; // 'environment' = trasera | 'user' = frontal
 
-window.addEventListener('beforeinstallprompt', (event) => {
-  // Evita que el mini-banner automático aparezca antes de tiempo
-  event.preventDefault();
-  eventoInstalacionDiferido = event;
+function actualizarMensajeEstado(texto) {
+  mensajeEstado.textContent = texto;
+}
 
-  // Muestra tu botón personalizado de instalación en la UI
-  const btnInstalar = document.getElementById('btn-instalar');
+// ---------- Instalación (Android/Chrome) ----------
+window.addEventListener('beforeinstallprompt', (evento) => {
+  evento.preventDefault();
+  eventoInstalacionDiferido = evento;
   btnInstalar.hidden = false;
 });
 
@@ -17,13 +32,13 @@ btnInstalar.addEventListener('click', () => {
 
   eventoInstalacionDiferido.userChoice.then((resultado) => {
     if (resultado.outcome === 'accepted') {
-      btnInstalar.hidden = true;         // ocultar tras aceptar la instalación
+      btnInstalar.hidden = true;
     }
-    eventoInstalacionDiferido = null;    // el evento solo se puede usar una vez
+    eventoInstalacionDiferido = null;
   });
 });
 
-// Registro del service worker
+// ---------- Service worker ----------
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -32,32 +47,33 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-let streamActual = null;
-let modoCamaraActual = 'environment'; // 'environment' = trasera | 'user' = frontal
-
-function detenerCamaraActiva(){
+// ---------- Cámara ----------
+function detenerCamaraActiva() {
   if (streamActual) {
-    streamActual.getTracks().forEach((track) => {
-      track.stop();
-    });
+    streamActual.getTracks().forEach((track) => track.stop());
     streamActual = null;
   }
 }
 
-function iniciarCamara(modo){
+function iniciarCamara(modo) {
   detenerCamaraActiva();
+  actualizarMensajeEstado('Iniciando cámara…');
 
   const restricciones = {
-    video: { facingMode: modo },
+    video: { facingMode: { ideal: modo } },
     audio: false
   };
 
   return navigator.mediaDevices.getUserMedia(restricciones)
     .then((stream) => {
       streamActual = stream;
-      const visorVideo = document.getElementById('visor-camara');
       visorVideo.srcObject = stream;
-      actualizarMensajeEstado(`Cámara activa (${modo === 'environment' ? 'Trasera' : 'Frontal'})`);
+      return visorVideo.play().catch(() => {});
+    })
+    .then(() => {
+      actualizarMensajeEstado(
+        `Cámara activa (${modo === 'environment' ? 'Trasera' : 'Frontal'})`
+      );
     })
     .catch((error) => {
       if (error.name === 'NotAllowedError') {
@@ -69,27 +85,41 @@ function iniciarCamara(modo){
       }
     });
 }
-// Paso 1: El usuario pulsa "Solicitar Acceso a Cámara" -> Mostramos aviso explicativo
-document.getElementById('btn-preparar-camara').addEventListener('click', () => {
-  document.getElementById('aviso-permiso').hidden = false;
+
+// Paso 1: mostrar el aviso explicativo
+btnPreparar.addEventListener('click', () => {
+  avisoPermiso.hidden = false;
 });
 
-// Paso 2: El usuario lee el motivo y pulsa "Aceptar y Encender Cámara"
-document.getElementById('btn-confirmar-permiso').addEventListener('click', () => {
-  document.getElementById('aviso-permiso').hidden = true;
+// Paso 2: el usuario acepta y se enciende la cámara
+btnConfirmar.addEventListener('click', () => {
+  avisoPermiso.hidden = true;
   iniciarCamara(modoCamaraActual);
 });
+
+// Alternar cámara
+btnAlternar.addEventListener('click', () => {
+  modoCamaraActual = (modoCamaraActual === 'environment') ? 'user' : 'environment';
+  iniciarCamara(modoCamaraActual);
+});
+
+// Apagar cámara
+btnApagar.addEventListener('click', () => {
+  detenerCamaraActiva();
+  visorVideo.srcObject = null;
+  actualizarMensajeEstado('Cámara apagada.');
+});
+
+// Reanudar el video al volver a la app (iOS lo congela)
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && streamActivo) {
+  if (document.visibilityState === 'visible' && streamActual) {
     visorVideo.play().catch(() => {});
   }
 });
 
-
-const ayudaIOS = document.querySelector('#ayuda-ios');
-
+// ---------- Ayuda de instalación en iOS ----------
 const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
-  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad moderno
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 const yaInstalada = window.navigator.standalone === true
   || window.matchMedia('(display-mode: standalone)').matches;
