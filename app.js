@@ -79,10 +79,21 @@ document.getElementById('btn-confirmar-permiso').addEventListener('click', () =>
   document.getElementById('aviso-permiso').hidden = true;
   iniciarCamara(modoCamaraActual);
 });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && streamActivo) {
+    visorVideo.play().catch(() => {});
+  }
+});
 
-const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const yaInstalada = window.navigator.standalone === true;
+
+const ayudaIOS = document.querySelector('#ayuda-ios');
+
+const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad moderno
+
+const yaInstalada = window.navigator.standalone === true
+  || window.matchMedia('(display-mode: standalone)').matches;
 
 if (esIOS && !yaInstalada) {
-  actualizarEstado('Para instalar: toca Compartir y luego "Agregar a pantalla de inicio".');
+  ayudaIOS.hidden = false;
 }
